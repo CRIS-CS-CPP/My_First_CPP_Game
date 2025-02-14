@@ -1,0 +1,6 @@
+# ignore everthing
+*
+
+# except for these patterns
+!.gitignore
+!*.cpp
