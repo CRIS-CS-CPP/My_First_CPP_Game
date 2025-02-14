@@ -1,17 +1,32 @@
 #include <windows.h>
 #include <iostream>
 
+bool RUNNING = true;
+
 LRESULT window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    /*
-     * DefWindowProc Calls the default window procedure to provide default
-     * processing for any window messages that an application does not process
-     */
-    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+    // zero value return code
+    LRESULT result = 0;
+
+    switch (uMsg) {
+    case WM_CLOSE:
+    case WM_DESTROY: {
+        RUNNING = false;
+    } break;
+
+    default: {
+        /*
+         * DefWindowProc Calls the default window procedure to provide default
+         * processing for any window messages that an application does not process
+         */
+        result = DefWindowProc(hwnd, uMsg, wParam, lParam);
+    }
+    }
+
+    return result;
 }
 
-INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-    PSTR lpCmdLine, INT nCmdShow)
+INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow)
 {
     // Create Window Class
     // https://learn.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-wndclassa
@@ -22,7 +37,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     window_class.style = CS_HREDRAW | CS_VREDRAW;
 
     // LPCWSTR is defined as `const wchar*` which uses 16 bits for Unicode Characters (like non-English characters)
-    window_class.lpszClassName = (LPCWSTR)"Game Window Class";
+    window_class.lpszClassName = L"Game Window Class";
 
     /*
      * The system passes input to a window procedure in the form of a message.
@@ -43,9 +58,9 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
      * border, and client area; it is meant to serve as an application's main window. It can
      * also have a window menu, minimize and maximize buttons, and scroll bars.
      */
-    CreateWindow(
+    HWND window = CreateWindow(
         window_class.lpszClassName,  // class name previously created in RegisterClass()
-        (LPCWSTR)"My First Game!",  // title bar text
+        L"My First Game!",  // title bar text
         WS_OVERLAPPEDWINDOW | WS_VISIBLE, // window style options
         CW_USEDEFAULT,  // x position (use defaults)
         CW_USEDEFAULT,  // y position (use defaults)
@@ -57,5 +72,40 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         nullptr         // pointer to object that is passed in to the Window message callback parameter LPARAM
     );
 
+    while (RUNNING) {
+        /*****   Input   *****/
+
+        // Contains message information from a thread's message queue.
+        MSG message;
+
+        /*
+         * PeekMessage() Dispatches incoming nonqueued messages,
+         * checks the thread message queue for a posted message,
+         * and retrieves the message (if any exist).
+         *
+         * In other words, in this loop, we are processing incoming messages from the OS
+         */
+        while (PeekMessage(&message, window, 0, 0, PM_REMOVE)) {
+            /*
+             * Translates virtual-key messages into character messages.
+             * The character messages are posted to the calling thread's message queue,
+             * to be read the next time the thread calls the GetMessage or PeekMessage function.
+             *
+             * https://learn.microsoft.com/en-us/windows/win32/inputdev/about-keyboard-input
+             */
+            TranslateMessage(&message);
+
+            /*
+             * Dispatches a message to a window procedure.
+             * (so that our window_callback() function gets called)
+             */
+            DispatchMessage(&message);
+        }
+
+        /*****   Simulate   *****/
+
+
+        /*****   Render   *****/
+    }
     return 0;
 }
