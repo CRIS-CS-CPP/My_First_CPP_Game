@@ -1,7 +1,14 @@
 #include <windows.h>
 #include <iostream>
 
+// global variable
 bool RUNNING = true;
+
+void* BUFFER_MEMORY = nullptr;
+int BUFFER_WIDTH;
+int BUFFER_HEIGHT;
+
+BITMAPINFO BUFFER_BITMAP_INFO;
 
 LRESULT window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -9,18 +16,40 @@ LRESULT window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     LRESULT result = 0;
 
     switch (uMsg) {
-    case WM_CLOSE:
-    case WM_DESTROY: {
-        RUNNING = false;
-    } break;
+        case WM_CLOSE:
+        case WM_DESTROY: {
+            RUNNING = false;
+        } break;
 
-    default: {
-        /*
-         * DefWindowProc Calls the default window procedure to provide default
-         * processing for any window messages that an application does not process
-         */
-        result = DefWindowProc(hwnd, uMsg, wParam, lParam);
-    }
+        case WM_SIZE: {
+            RECT rect;
+            GetClientRect(hwnd, &rect);
+            BUFFER_WIDTH = rect.right - rect.left;
+            BUFFER_HEIGHT = rect.bottom - rect.top;
+
+            int buffer_size = BUFFER_WIDTH * BUFFER_HEIGHT * sizeof(unsigned int);
+
+            // free existing buffer
+            if (BUFFER_MEMORY)
+                VirtualFree(BUFFER_MEMORY, 0, MEM_RELEASE);
+
+            BUFFER_MEMORY = VirtualAlloc(0, buffer_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+            BUFFER_BITMAP_INFO.bmiHeader.biSize = sizeof(BUFFER_BITMAP_INFO.bmiHeader);
+            BUFFER_BITMAP_INFO.bmiHeader.biWidth = BUFFER_WIDTH;
+            BUFFER_BITMAP_INFO.bmiHeader.biHeight = BUFFER_HEIGHT;
+            BUFFER_BITMAP_INFO.bmiHeader.biPlanes = 1;
+            BUFFER_BITMAP_INFO.bmiHeader.biBitCount = 32;
+            BUFFER_BITMAP_INFO.bmiHeader.biCompression = BI_RGB;
+        } break;
+
+        default: {
+            /*
+             * DefWindowProc Calls the default window procedure to provide default
+             * processing for any window messages that an application does not process
+             */
+            result = DefWindowProc(hwnd, uMsg, wParam, lParam);
+        }
     }
 
     return result;
@@ -72,6 +101,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
         nullptr         // pointer to object that is passed in to the Window message callback parameter LPARAM
     );
 
+    HDC hdc = GetDC(window);
+
     while (RUNNING) {
         /*****   Input   *****/
 
@@ -103,9 +134,15 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
         }
 
         /*****   Simulate   *****/
-
-
+        unsigned int* pixel = (unsigned int*)BUFFER_MEMORY;
+        for (int y = 0; y < BUFFER_HEIGHT; y++) {
+            for (int x = 0; x < BUFFER_WIDTH; x++) {
+                *pixel++ = 0xFF0000;
+            }
+        }
         /*****   Render   *****/
+        StretchDIBits(hdc, 0, 0, BUFFER_WIDTH, BUFFER_HEIGHT, 0, 0, BUFFER_WIDTH, BUFFER_HEIGHT, BUFFER_MEMORY, &BUFFER_BITMAP_INFO, DIB_RGB_COLORS, SRCCOPY);
     }
+
     return 0;
 }
