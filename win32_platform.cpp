@@ -141,7 +141,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
         }
         
         /*****   Simulate   *****/
-        render_background();
+        clear_screen(0xFF5500);
+        draw_rect(50, 50, 200, 500, 0x00FF22);
 
         /*****   Render   *****/
         StretchDIBits(hdc, 0, 0, render_state.width, render_state.height, 0, 0, render_state.width, render_state.height, render_state.memory, &render_state.bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
