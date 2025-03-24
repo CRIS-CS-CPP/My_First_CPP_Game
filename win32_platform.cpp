@@ -1,8 +1,10 @@
 #include <windows.h>
 #include <iostream>
 
+#include "utils.cpp"
+
 // global variable
-bool RUNNING = true;
+GLOBAL_VARIABLE bool RUNNING = true;
 
 // struct definition
 struct Render_State {
@@ -12,7 +14,7 @@ struct Render_State {
 };
 
 // declare struct instance
-Render_State render_state;
+GLOBAL_VARIABLE Render_State render_state;
 
 #include "renderer.cpp"
 
