@@ -39,10 +39,14 @@ void draw_rect(int x0, int y0, int x1, int y1, unsigned int color) {
         *       2:0  2:1  2:2
         *   But in memory, its represented like:
         *       0:0, 0:1, 0:2, 1:0, 1:1, 1:2, 2:0, 2:1, 2:2
-        *       ^                   ^
+        *       ^                                  ^
         *   render_state.memory is pointing to 0:0
-        *   So, to point to row:col 1:1, it is
-        *       0 + 1 + 1 * row_width
+        *   So, to point to row:col 2:1, it is
+        *       0 + 1 + 2 * row_width
+        *       ^   ^   ^    
+        *       |   |   current row
+        *       |   x offset
+        *       start of buffer
         */
         unsigned int* pixel = (unsigned int*)render_state.memory + x0 + y*render_state.width;
         for (int x = x0; x < x1; x++) {
